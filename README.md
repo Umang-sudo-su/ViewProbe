@@ -20,7 +20,7 @@ When an agent introduces a CSS defect (such as a rigid `min-width` that overflow
 
 | Before Fix (Broken Layout) | After Fix (Self-Healed) |
 | :---: | :---: |
-| <img src="assets/before-fix.png" width="340" alt="Mobile layout before fix: card overflows viewport by 23px" /> | <img src="assets/after-fix.png" width="340" alt="Mobile layout after fix: responsive fluid bounds" /> |
+| <img src=".github/assets/before-fix.png" width="340" alt="Mobile layout before fix: card overflows viewport by 23px" /> | <img src=".github/assets/after-fix.png" width="340" alt="Mobile layout after fix: responsive fluid bounds" /> |
 | ❌ *Card overflows 375px screen by 23px, text clipped, 22px button* | ✅ *Fluid responsive bounds, clean ellipsis, 44px accessible touch target* |
 
 ## How ViewProbe Compares
@@ -140,7 +140,7 @@ ViewProbe ships as an MCP server so any MCP-compatible agent can use it as a too
 Instead of sending a full-page screenshot (1,500+ vision tokens), ViewProbe computes the exact screen-space bounding box of the violation, highlights it with a red debug border, and crops only that region (~80 tokens):
 
 <p align="center">
-  <img src="assets/micro-crop-overflow.jpg" width="460" alt="ViewProbe Micro-Crop with Red Highlight Box" />
+  <img src=".github/assets/micro-crop-overflow.jpg" width="460" alt="ViewProbe Micro-Crop with Red Highlight Box" />
 </p>
 
 You can disable micro-crops with `--no-crops` or `microCrops: false` in the MCP call.
