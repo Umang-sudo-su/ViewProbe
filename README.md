@@ -1,10 +1,63 @@
-# ViewProbe
+<p align="center">
+  <img src=".github/assets/viewprobe-icon.jpg" width="100" height="100" style="border-radius: 20px" alt="ViewProbe Logo" />
+</p>
 
-**Headless layout verification engine for AI coding agents.**
+<h1 align="center">ViewProbe</h1>
 
-ViewProbe gives coding agents a fast, deterministic way to catch CSS and layout bugs — overflow, broken responsive layouts, truncated text, undersized tap targets — without relying on expensive vision models or manual human review.
+<p align="center">
+  <b>Headless layout verification engine & autonomous CSS healing for AI coding agents.</b>
+</p>
+
+<p align="center">
+  <a href="https://glama.ai/mcp/servers/Umang-sudo-su/ViewProbe"><img src="https://glama.ai/mcp/servers/Umang-sudo-su/ViewProbe/badges/score.svg" alt="Glama Score" /></a>
+  <a href="https://www.npmjs.com/package/viewprobe"><img src="https://img.shields.io/npm/v/viewprobe?color=cb3837&logo=npm" alt="npm version" /></a>
+  <a href="https://github.com/Umang-sudo-su/ViewProbe/actions/workflows/ci.yml"><img src="https://github.com/Umang-sudo-su/ViewProbe/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
+  <a href="https://github.com/Umang-sudo-su/ViewProbe/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" /></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Umang-sudo-su/ViewProbe/raw/main/.github/assets/videos/viewprobe-demo.webm">
+    <img src=".github/assets/viewprobe-banner.jpg" width="800" alt="ViewProbe Multi-Viewport Autonomous Layout Verification" />
+  </a>
+</p>
+
+<p align="center">
+  🎬 <b><a href="https://github.com/Umang-sudo-su/ViewProbe/raw/main/.github/assets/videos/viewprobe-demo.webm">Watch the 15-second autonomous self-healing demo (HD WebM)</a></b>
+</p>
+
+ViewProbe gives coding agents a fast, deterministic way to catch CSS and layout bugs — horizontal overflow, broken responsive layouts, truncated text, undersized tap targets — without relying on expensive vision models or manual human review.
 
 It runs headless Chromium, performs geometric analysis on the rendered DOM, and returns compact, structured diagnostics that an LLM can parse in a single turn. When something breaks, it tells the agent *exactly which element* and *which CSS properties* caused the problem, along with an optional micro-crop screenshot of just the broken region.
+
+---
+
+## 🚀 1-Click Agent Setup
+
+### Claude Code (CLI)
+```bash
+claude mcp add viewprobe npx -y viewprobe-mcp
+```
+
+### Cursor
+Add directly in **Settings (`Cmd + ,`) → Features → MCP → + Add New MCP Server**:
+* **Name**: `viewprobe`
+* **Type**: `command`
+* **Command**: `npx -y viewprobe-mcp`
+
+### Claude Desktop
+Add to `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "viewprobe": {
+      "command": "npx",
+      "args": ["-y", "viewprobe-mcp"]
+    }
+  }
+}
+```
+
+---
 
 ## Why
 
@@ -114,8 +167,20 @@ ViewProbe ships as an MCP server so any MCP-compatible agent can use it as a too
 {
   "mcpServers": {
     "viewprobe": {
+      "command": "npx",
+      "args": ["-y", "viewprobe-mcp"]
+    }
+  }
+}
+```
+
+Or when running from a local clone:
+```json
+{
+  "mcpServers": {
+    "viewprobe": {
       "command": "node",
-      "args": ["path/to/viewprobe/dist/mcp-server.js"]
+      "args": ["/absolute/path/to/ViewProbe/dist/mcp-server.js"]
     }
   }
 }
