@@ -15,7 +15,7 @@ metadata:
 > ⚡ **NPM Package**: [https://www.npmjs.com/package/viewprobe](https://www.npmjs.com/package/viewprobe) (`npx viewprobe`)  
 > 🌟 **Star on GitHub**: Support the open-source project if this skill helps your agent!
 
-ViewProbe is a headless layout geometry engine for AI coding agents. Instead of burning 1,500+ vision tokens on full-page screenshots that can't pinpoint CSS culprits, ViewProbe audits the live rendered DOM in ~350ms, isolates exact CSS selectors and computed styles causing layout bugs, and returns lightweight micro-crops.
+ViewProbe is a headless layout geometry and autonomous remediation engine for AI coding agents. Instead of burning 1,500+ vision tokens on full-page screenshots that can't pinpoint CSS culprits, ViewProbe audits the live rendered DOM in ~350ms, isolates exact CSS selectors and computed styles causing layout bugs, returns lightweight micro-crops, and automatically generates concrete CSS and Tailwind CSS patches.
 
 ## When to Use This Skill
 
@@ -24,22 +24,29 @@ Activate this skill when:
 - The user asks to "check mobile responsiveness", "audit layout", "fix mobile overflow", or "test UI".
 - Before finalizing any frontend task, to verify that elements do not burst out of mobile viewports.
 - Checking touch-target accessibility (WCAG 2.5.8 tap targets < 44×44px).
+- Verifying static HTML files or raw markup components in-memory without starting a web server.
 
 ---
 
 ## Quick Execution
 
 ### 1. Run Layout Audit
-Audit a local dev server or live URL:
+Audit a local dev server, live URL, local file, or raw HTML:
 
 ```bash
 # Default check (mobile: 375x667, desktop: 1280x800)
 npx -y viewprobe check http://localhost:3000
 
+# Audit local static HTML files directly (no server needed)
+npx -y viewprobe check ./dist/index.html -v mobile,desktop
+
+# Audit raw HTML markup in-memory
+npx -y viewprobe check --html "<div style='width:600px;'>test</div>" -v mobile
+
 # Audit specific viewports (mobile, tablet, desktop, wide)
 npx -y viewprobe check http://localhost:3000 -v mobile,tablet,desktop
 
-# Return raw structured JSON (optimized for agent parsing)
+# Return raw structured JSON with suggestedFix patches
 npx -y viewprobe check http://localhost:3000 -f json
 
 # Return human-readable Markdown report
@@ -60,31 +67,39 @@ When executing frontend tasks, follow this 4-step loop:
 
 ### Step 1: Run Verification
 ```bash
-npx -y viewprobe check <url> -v mobile,desktop -f json
+npx -y viewprobe check <url-or-file> -v mobile,desktop -f json
 ```
 
-### Step 2: Parse Violations
-ViewProbe returns structured violations with exact culprits:
+### Step 2: Read Diagnostic & Suggested Patch
+ViewProbe returns structured violations with exact culprits AND ready-to-apply patches in `suggestedFix`:
 
+```json
+{
+  "type": "HORIZONTAL_OVERFLOW",
+  "selector": "div.pricing-grid > div:nth-child(2)",
+  "culpritStyles": ["width: 480px", "min-width: 480px"],
+  "suggestedFix": {
+    "css": "max-width: 100%; min-width: 0; flex-shrink: 1;",
+    "tailwind": "max-w-full min-w-0 shrink",
+    "explanation": "Relax rigid min-width and allow element to shrink within parent container bounds."
+  }
+}
+```
+
+Violations handled:
 1. **`horizontal_overflow`**:
-   - **Cause**: Element `scrollWidth > clientWidth` or extends past viewport bounds.
-   - **Culprit**: Fixed pixel widths (`width: 600px`), rigid min-widths (`min-w-[400px]`), or `flex-shrink: 0`.
-   - **Surgical Fix**: Apply `max-w-full`, `min-w-0`, `flex-1`, or `overflow-x-hidden`. On flex containers, add `flex-wrap` or switch to vertical stacking (`flex-col md:flex-row`).
-
+   - **Fix**: Apply the suggested `max-w-full`, `min-w-0`, `flex-1`, or `overflow-x-hidden`. On flex containers, add `flex-wrap` or switch to vertical stacking (`flex-col md:flex-row`).
 2. **`text_truncation`**:
-   - **Cause**: Text overflows container without `text-overflow: ellipsis`.
-   - **Surgical Fix**: Add `truncate` (`overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`) or allow multiline wrapping (`break-words`).
-
+   - **Fix**: Apply the suggested `truncate` (`overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`) or allow multiline wrapping (`break-words`).
 3. **`tap_target_too_small`**:
-   - **Cause**: Interactive elements (`<button>`, `<a>`, `<input>`) smaller than 44×44px (WCAG 2.5.8).
-   - **Surgical Fix**: Increase padding (`p-2.5` / `py-3 px-4`) or set `min-h-[44px] min-w-[44px]`.
+   - **Fix**: Apply the suggested padding or `min-w-[44px] min-h-[44px]` bounds (WCAG 2.5.8).
 
-### Step 3: Apply Surgical CSS Fix
-Edit only the offending selector identified in `violation.selector`. Do not rewrite unrelated components.
+### Step 3: Apply the Suggested Patch
+Apply the `suggestedFix.css` or `suggestedFix.tailwind` patch directly to the element at `violation.selector`.
 
 ### Step 4: Re-verify
-Re-run ViewProbe. Confirm `violations: []` and 0 errors:
+Re-run ViewProbe to confirm clean pass (0 violations):
 ```bash
-npx -y viewprobe check <url> -v mobile
+npx -y viewprobe check <url-or-file> -v mobile
 # Expected: ✔ All viewports passed. 0 layout violations detected.
 ```
