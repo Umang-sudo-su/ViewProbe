@@ -16,13 +16,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Umang-sudo-su/ViewProbe/raw/main/.github/assets/videos/viewprobe-demo.webm">
-    <img src=".github/assets/viewprobe-banner.jpg" width="800" alt="ViewProbe Multi-Viewport Autonomous Layout Verification" />
-  </a>
-</p>
-
-<p align="center">
-  🎬 <b><a href="https://github.com/Umang-sudo-su/ViewProbe/raw/main/.github/assets/videos/viewprobe-demo.webm">Watch the 15-second autonomous self-healing demo (HD WebM)</a></b>
+  🎬 <b><a href="https://github.com/Umang-sudo-su/ViewProbe/raw/main/.github/assets/videos/viewprobe-demo.webm">Watch 15-second autonomous self-healing demo (HD WebM)</a></b>
 </p>
 
 ViewProbe gives coding agents a fast, deterministic way to catch CSS and layout bugs — horizontal overflow, broken responsive layouts, truncated text, undersized tap targets — without relying on expensive vision models or manual human review.
