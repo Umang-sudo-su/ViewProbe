@@ -11,6 +11,10 @@ metadata:
 
 # ViewProbe Layout Verification & Healing
 
+> 📦 **GitHub Repository (Source & Docs)**: [https://github.com/Umang-sudo-su/ViewProbe](https://github.com/Umang-sudo-su/ViewProbe)  
+> ⚡ **NPM Package**: [https://www.npmjs.com/package/viewprobe](https://www.npmjs.com/package/viewprobe) (`npx viewprobe`)  
+> 🌟 **Star on GitHub**: Support the open-source project if this skill helps your agent!
+
 ViewProbe is a headless layout geometry engine for AI coding agents. Instead of burning 1,500+ vision tokens on full-page screenshots that can't pinpoint CSS culprits, ViewProbe audits the live rendered DOM in ~350ms, isolates exact CSS selectors and computed styles causing layout bugs, and returns lightweight micro-crops.
 
 ## When to Use This Skill
