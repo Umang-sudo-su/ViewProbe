@@ -15,7 +15,28 @@ export class ProbeEngine {
   private browser: Browser | null = null;
 
   async launch(): Promise<void> {
-    this.browser = await chromium.launch({ headless: true });
+    try {
+      this.browser = await chromium.launch({ headless: true });
+    } catch (err: unknown) {
+      const msg = (err as Error)?.message ?? "";
+      if (
+        msg.includes("Executable doesn't exist") ||
+        msg.includes("looks like Playwright was just installed")
+      ) {
+        try {
+          this.browser = await chromium.launch({
+            channel: "chrome",
+            headless: true,
+          });
+          return;
+        } catch {
+          throw new Error(
+            "Chromium browser not found. Please install Playwright browsers with:\n  npx playwright install chromium"
+          );
+        }
+      }
+      throw err;
+    }
   }
 
   async close(): Promise<void> {

@@ -8,7 +8,8 @@ interface CropOptions {
 
 /**
  * Captures a small region around a violation bounding box and returns
- * a base64-encoded JPEG. Uses Playwright's clip option for fast slicing.
+ * a base64-encoded JPEG. Uses Playwright's native clipping for fast,
+ * dependency-free cropping.
  */
 export async function cropViolation(
   page: Page,
