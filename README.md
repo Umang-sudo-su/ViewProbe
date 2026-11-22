@@ -12,6 +12,17 @@ AI coding agents (Cursor, Claude Code, Cline, Aider, etc.) are surprisingly good
 
 ViewProbe closes that feedback loop. The agent writes the code, ViewProbe checks the layout across viewports in under a second, and if something breaks, the agent gets back the exact selector and computed styles needed to fix it — no guessing, no print-statement debugging.
 
+## Visual Verification in Action
+
+### Autonomous Self-Healing on Mobile Viewports
+
+When an agent introduces a CSS defect (such as a rigid `min-width` that overflows on mobile, or text clipping without ellipsis), ViewProbe identifies the exact culprit and verifies the fix:
+
+| Before Fix (Broken Layout) | After Fix (Self-Healed) |
+| :---: | :---: |
+| <img src="assets/before-fix.png" width="340" alt="Mobile layout before fix: card overflows viewport by 23px" /> | <img src="assets/after-fix.png" width="340" alt="Mobile layout after fix: responsive fluid bounds" /> |
+| ❌ *Card overflows 375px screen by 23px, text clipped, 22px button* | ✅ *Fluid responsive bounds, clean ellipsis, 44px accessible touch target* |
+
 ## Quick Start
 
 ```bash
@@ -105,9 +116,13 @@ ViewProbe ships as an MCP server so any MCP-compatible agent can use it as a too
 
 **`viewprobe_viewports`** — List available viewport presets with dimensions.
 
-## Micro-Crops
+## Micro-Crops (~80 tokens vs ~1,500 tokens)
 
-Instead of sending a full-page screenshot (1500+ vision tokens), ViewProbe crops a small region around just the broken element with a red debug outline. This typically costs ~80 tokens and gives the agent clear visual evidence of the problem.
+Instead of sending a full-page screenshot (1,500+ vision tokens), ViewProbe computes the exact screen-space bounding box of the violation, highlights it with a red debug border, and crops only that region (~80 tokens):
+
+<p align="center">
+  <img src="assets/micro-crop-overflow.jpg" width="460" alt="ViewProbe Micro-Crop with Red Highlight Box" />
+</p>
 
 You can disable micro-crops with `--no-crops` or `microCrops: false` in the MCP call.
 
