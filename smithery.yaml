@@ -1,0 +1,13 @@
+# Smithery configuration for ViewProbe
+# Automatically configures ViewProbe for Claude Desktop, Claude Code, and Cursor
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties: {}
+    required: []
+  commandFunction: |-
+    (config) => ({
+      command: 'npx',
+      args: ['-y', 'viewprobe-mcp']
+    })
