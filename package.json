@@ -35,7 +35,7 @@
     "url": "https://github.com/Umang-sudo-su/ViewProbe.git"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "playwright": "^1.49.0",
