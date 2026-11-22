@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clean Layout Fixture</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; width: 100%; }
+    .card-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .clean-card {
+      flex: 1 1 280px;
+      max-width: 100%;
+      padding: 24px;
+      background: #f0f4f8;
+      border-radius: 8px;
+    }
+    .action-button {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 10px 16px;
+      background: #0070f3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .ellipsis-title {
+      max-width: 250px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="ellipsis-title">Clean header with proper text ellipsis truncation</h1>
+    <div class="card-grid">
+      <div class="clean-card">
+        <h2>Card Header</h2>
+        <p>Responsive card layout with flex-wrap and fluid width.</p>
+        <button class="action-button">Confirm</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Broken Layout Fixture</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    /* Intentionally overflows mobile viewports (< 500px) */
+    .card-grid {
+      display: flex;
+      gap: 16px;
+    }
+    .broken-card {
+      min-width: 480px;
+      padding: 24px;
+      background: #f0f4f8;
+      border-radius: 8px;
+    }
+    /* Undersized tap target */
+    .icon-button {
+      width: 20px;
+      height: 20px;
+      background: #0070f3;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    /* Clipped text without ellipsis */
+    .clipped-title {
+      width: 120px;
+      white-space: nowrap;
+      overflow: hidden;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="clipped-title">This is a very long title that exceeds container width</h1>
+    <div class="card-grid">
+      <div class="broken-card">
+        <h2>Card Header</h2>
+        <p>Fixed min-width that will overflow on mobile screens.</p>
+        <button class="icon-button" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
