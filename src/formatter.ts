@@ -19,6 +19,7 @@ export function formatForAgent(result: ProbeResult): string {
       culpritStyles: v.culpritStyles.map(
         (s) => `${s.property}: ${s.value}`
       ),
+      suggestedFix: v.suggestedFix,
     })),
   };
 
@@ -91,6 +92,16 @@ function formatViolation(
       lines.push(`${s.property}: ${s.value};`);
     });
     lines.push("```");
+    lines.push("");
+  }
+
+  if (v.suggestedFix) {
+    lines.push("**Suggested Fix:**");
+    lines.push(`- **CSS:** \`${v.suggestedFix.css}\``);
+    if (v.suggestedFix.tailwind) {
+      lines.push(`- **Tailwind:** \`${v.suggestedFix.tailwind}\``);
+    }
+    lines.push(`- *${v.suggestedFix.explanation}*`);
     lines.push("");
   }
 }

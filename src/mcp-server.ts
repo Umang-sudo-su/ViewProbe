@@ -35,13 +35,17 @@ const TOOL_DEFINITIONS = [
   {
     name: "viewprobe_check",
     description:
-      "Scan a URL for CSS layout violations (overflow, truncation, tap-target sizing) across responsive viewports. Returns compact JSON with the exact CSS selectors and computed styles causing each issue.",
+      "Scan a URL, local HTML file, or raw HTML string for CSS layout violations (overflow, truncation, tap-target sizing) across responsive viewports. Returns compact JSON with exact selectors, computed styles, and automated suggested fixes (Tailwind & CSS).",
     inputSchema: {
       type: "object" as const,
       properties: {
         url: {
           type: "string",
-          description: "The URL to scan (e.g. http://localhost:3000)",
+          description: "The URL or local file path to scan (e.g. http://localhost:3000, ./index.html)",
+        },
+        html: {
+          type: "string",
+          description: "Optional raw HTML string to scan directly in-memory without a running server.",
         },
         viewports: {
           type: "string",
@@ -65,7 +69,6 @@ const TOOL_DEFINITIONS = [
           default: true,
         },
       },
-      required: ["url"],
     },
   },
   {
@@ -84,7 +87,11 @@ async function handleToolCall(
 ): Promise<unknown> {
   switch (name) {
     case "viewprobe_check": {
-      const url = args.url as string;
+      const url = args.url as string | undefined;
+      const html = args.html as string | undefined;
+      if (!url && !html) {
+        throw new Error("Must provide either 'url' or 'html'");
+      }
       const viewportStr = (args.viewports as string) ?? "mobile,desktop";
       const viewportNames = viewportStr.split(",").map((s) => s.trim());
       const viewports: Viewport[] = viewportNames
@@ -93,6 +100,7 @@ async function handleToolCall(
 
       const config: ProbeConfig = {
         url,
+        html,
         viewports: viewports.length > 0 ? viewports : undefined,
         selectors: (args.selectors as string)
           ?.split(",")

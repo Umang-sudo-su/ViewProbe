@@ -15,8 +15,9 @@ program
 
 program
   .command("check")
-  .description("Scan a URL for layout violations across viewports")
-  .argument("<url>", "URL to scan (e.g. http://localhost:3000)")
+  .description("Scan a URL, local HTML file, or raw HTML string for layout violations")
+  .argument("[target]", "URL or local HTML file path to scan (e.g. http://localhost:3000, ./index.html)")
+  .option("--html <html>", "Raw HTML string to scan directly in-memory without a server")
   .option(
     "-v, --viewports <viewports>",
     "Comma-separated viewport names: mobile,tablet,desktop,wide",
@@ -28,7 +29,13 @@ program
   .option("--no-crops", "Disable micro-crop screenshots")
   .option("--timeout <ms>", "Page load timeout in milliseconds", "10000")
   .option("--wait-for <selector>", "Wait for this selector before scanning")
-  .action(async (url: string, opts) => {
+  .action(async (target: string | undefined, opts) => {
+    if (!target && !opts.html) {
+      console.error(chalk.red("Error: Must provide a target URL/file path or --html string."));
+      console.error("Usage: viewprobe check <url|file> [options] OR viewprobe check --html '<div>...'");
+      process.exit(1);
+    }
+
     const viewportNames = opts.viewports.split(",").map((s: string) => s.trim());
     const viewports: Viewport[] = viewportNames
       .map((name: string) => DEFAULT_VIEWPORTS.find((v) => v.name === name))
@@ -43,7 +50,8 @@ program
     }
 
     const config: ProbeConfig = {
-      url,
+      url: target,
+      html: opts.html,
       viewports,
       selectors: opts.selectors?.split(",").map((s: string) => s.trim()),
       skipSelectors: opts.skip?.split(",").map((s: string) => s.trim()),
@@ -55,9 +63,10 @@ program
     const engine = new ProbeEngine();
 
     try {
+      const scanLabel = opts.html ? "raw HTML in-memory" : target;
       console.error(
         chalk.dim(
-          `Scanning ${url} across ${viewports.map((v) => v.name).join(", ")}...`
+          `Scanning ${scanLabel} across ${viewports.map((v) => v.name).join(", ")}...`
         )
       );
 

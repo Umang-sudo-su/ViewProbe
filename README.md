@@ -98,37 +98,43 @@ npm install -g viewprobe
 # scan a running page across mobile and desktop
 viewprobe check http://localhost:3000
 
+# scan a local HTML file directly without a server
+viewprobe check ./dist/index.html -v mobile,desktop
+
+# scan raw HTML markup in-memory
+viewprobe check --html "<div style='width:600px;'>test</div>" -v mobile
+
 # scan specific viewports
 viewprobe check http://localhost:3000 -v mobile,tablet,desktop
 
-# get markdown report instead of JSON
+# get markdown report with suggested fixes
 viewprobe check http://localhost:3000 -f markdown
 
 # focus on specific elements
 viewprobe check http://localhost:3000 -s ".hero,.pricing-grid"
 ```
 
-## What It Catches
+## What It Catches & Heals
 
-| Check | Severity | Description |
-|-------|----------|-------------|
-| **Horizontal Overflow** | error | Elements wider than their container or the viewport, causing unwanted horizontal scroll |
-| **Text Truncation** | warning | Text content clipped without `text-overflow: ellipsis` |
-| **Tap Target Sizing** | warning | Interactive elements smaller than 44×44px (WCAG 2.5.8) |
-| **Body Scroll** | error | Page-level horizontal scroll caused by elements breaking out of the viewport |
+| Check | Severity | Description | Autonomous Suggested Fix |
+|-------|----------|-------------|--------------------------|
+| **Horizontal Overflow** | error | Elements wider than container or viewport | Provides fluid `max-width: 100%` and Tailwind `max-w-full shrink` patches |
+| **Text Truncation** | warning | Text clipped without `text-overflow: ellipsis` | Generates CSS `ellipsis` + `nowrap` or Tailwind `truncate` |
+| **Tap Target Sizing** | warning | Interactive elements smaller than 44×44px (WCAG 2.5.8) | Adds accessible padding and `min-w-[44px] min-h-[44px]` bounds |
+| **Body Scroll** | error | Viewport-level horizontal scroll caused by breakout elements | Generates root containment (`overflow-x: hidden`) patches |
 
 ## Output Formats
 
 ### Agent format (default)
 
-Compact JSON designed for LLM consumption:
+Compact JSON designed for LLM consumption, complete with actionable suggested patches:
 
 ```json
 {
   "status": "FAIL",
   "url": "http://localhost:3000",
   "duration": "340ms",
-  "summary": "Found 1 error and 1 warning across 2 viewports.",
+  "summary": "Found 1 error across 1 viewport.",
   "violations": [
     {
       "type": "HORIZONTAL_OVERFLOW",
@@ -139,7 +145,12 @@ Compact JSON designed for LLM consumption:
       "culpritStyles": [
         "min-width: 400px",
         "flex-shrink: 0"
-      ]
+      ],
+      "suggestedFix": {
+        "css": "max-width: 100%; min-width: 0; flex-shrink: 1;",
+        "tailwind": "max-w-full min-w-0 shrink",
+        "explanation": "Relax rigid min-width and allow element to shrink within parent container bounds."
+      }
     }
   ]
 }
@@ -182,11 +193,12 @@ Or when running from a local clone:
 
 ### Tools
 
-**`viewprobe_check`** — Scan a URL for layout violations.
+**`viewprobe_check`** — Scan a URL, local file, or raw HTML for layout violations.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `url` | string | yes | URL to scan |
+| `url` | string | no* | URL or local file path to scan (*required unless `html` is provided) |
+| `html` | string | no* | Raw HTML string to scan in-memory without a server |
 | `viewports` | string | no | Comma-separated: mobile, tablet, desktop, wide |
 | `selectors` | string | no | CSS selectors to focus on |
 | `skipSelectors` | string | no | CSS selectors to skip |

@@ -17,6 +17,12 @@ export interface CulpritStyle {
   selector: string;
 }
 
+export interface SuggestedFix {
+  css: string;
+  tailwind?: string;
+  explanation: string;
+}
+
 export type ViolationType =
   | "HORIZONTAL_OVERFLOW"
   | "VERTICAL_OVERFLOW"
@@ -36,6 +42,7 @@ export interface LayoutViolation {
   bounds: BoundingBox;
   culpritStyles: CulpritStyle[];
   microCrop?: string;
+  suggestedFix?: SuggestedFix;
 }
 
 export interface ProbeResult {
@@ -49,7 +56,9 @@ export interface ProbeResult {
 }
 
 export interface ProbeConfig {
-  url: string;
+  url?: string;
+  filePath?: string;
+  html?: string;
   viewports?: Viewport[];
   selectors?: string[];
   timeout?: number;

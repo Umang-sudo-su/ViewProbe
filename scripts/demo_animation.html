@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ViewProbe Autonomous Layout Healing Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #07090e;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      width: 1280px;
+      height: 720px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Top Navigation Bar */
+    .top-bar {
+      height: 52px;
+      background: rgba(13, 17, 26, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 50;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #00f0ff 0%, #ff2d55 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+    }
+    .brand-icon svg { width: 16px; height: 16px; fill: #07090e; }
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .brand-tag {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: rgba(0, 240, 255, 0.12);
+      color: #00f0ff;
+      border: 1px solid rgba(0, 240, 255, 0.3);
+    }
+    .badge-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 8px #34d399;
+    }
+
+    /* Main Stage */
+    .stage {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 660px 1fr;
+      padding: 24px;
+      gap: 24px;
+      position: relative;
+    }
+
+    /* Background Glow Effects */
+    .glow-cyan {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      top: -100px;
+      left: 100px;
+      background: radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .glow-ruby {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      bottom: -100px;
+      right: 100px;
+      background: radial-gradient(circle, rgba(255, 45, 85, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Terminal Card */
+    .terminal-window {
+      background: #0d121c;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+    .terminal-header {
+      height: 38px;
+      background: rgba(18, 24, 38, 0.8);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      position: relative;
+    }
+    .traffic-lights {
+      display: flex;
+      gap: 6px;
+    }
+    .traffic-lights span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .traffic-lights .tl-red { background: #ff5f56; }
+    .traffic-lights .tl-yellow { background: #ffbd2e; }
+    .traffic-lights .tl-green { background: #27c93f; }
+    .terminal-title {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: #64748b;
+      font-family: monospace;
+      letter-spacing: 0.02em;
+    }
+    .terminal-body {
+      flex: 1;
+      padding: 18px;
+      font-family: "SF Mono", "Fira Code", Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #cbd5e1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .log-line {
+      display: flex;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: all 0.25s ease-out;
+    }
+    .log-line.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .cmd-prompt { color: #00f0ff; font-weight: bold; }
+    .cmd-text { color: #f8fafc; font-weight: 600; }
+    .log-dim { color: #64748b; }
+    .log-err { color: #ff2d55; font-weight: bold; }
+    .log-succ { color: #34d399; font-weight: bold; }
+    .log-warn { color: #fbbf24; }
+    .log-json {
+      background: rgba(0, 0, 0, 0.35);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border-left: 3px solid #ff2d55;
+      font-size: 11px;
+      color: #f1f5f9;
+      margin: 4px 0;
+    }
+    .log-json-succ {
+      background: rgba(0, 0, 0, 0.35);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border-left: 3px solid #34d399;
+      font-size: 11px;
+      color: #f1f5f9;
+      margin: 4px 0;
+    }
+
+    /* Phone Device Stage */
+    .device-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .device-header {
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .device-header .pill {
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-family: monospace;
+      color: #38bdf8;
+    }
+
+    /* iPhone Frame */
+    .phone-frame {
+      width: 320px;
+      height: 560px;
+      background: #0f172a;
+      border-radius: 40px;
+      border: 6px solid #1e293b;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1), 0 24px 60px rgba(0, 0, 0, 0.8);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Dynamic Island */
+    .dynamic-island {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 20px;
+      background: #000;
+      border-radius: 16px;
+      z-index: 40;
+    }
+
+    /* Screen Content */
+    .screen-content {
+      flex: 1;
+      padding: 40px 14px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-x: hidden;
+      position: relative;
+      background: linear-gradient(180deg, #0b1120 0%, #030712 100%);
+    }
+
+    .hero-text {
+      text-align: center;
+      padding: 6px 0;
+    }
+    .hero-h1 {
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.2;
+    }
+    .hero-sub {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    /* Cards Container */
+    .cards-wrapper {
+      display: flex;
+      gap: 10px;
+      position: relative;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cards-wrapper.broken {
+      flex-direction: row;
+      width: 480px; /* Overflows 320px viewport! */
+    }
+    .cards-wrapper.fixed {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .card {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.4s ease;
+      position: relative;
+    }
+    .cards-wrapper.broken .card {
+      min-width: 220px;
+    }
+    .cards-wrapper.fixed .card {
+      width: 100%;
+    }
+    .card-featured {
+      background: linear-gradient(145deg, rgba(30, 58, 138, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+    .card-price {
+      font-size: 18px;
+      font-weight: 800;
+      color: #38bdf8;
+    }
+    .card-btn {
+      margin-top: 4px;
+      padding: 6px;
+      border-radius: 6px;
+      background: #38bdf8;
+      color: #0f172a;
+      font-size: 10px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    /* Red Laser Targeting Box (ViewProbe Overlay) */
+    .laser-target {
+      position: absolute;
+      top: 0;
+      left: 230px;
+      width: 220px;
+      height: 120px;
+      border: 2px dashed #ff2d55;
+      background: rgba(255, 45, 85, 0.15);
+      border-radius: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.96);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 30;
+    }
+    .laser-target.active {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 24px rgba(255, 45, 85, 0.6);
+    }
+    .target-badge {
+      position: absolute;
+      top: -12px;
+      left: 10px;
+      background: #ff2d55;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Laser Scanner Beam */
+    .scan-beam {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent 0%, #00f0ff 50%, transparent 100%);
+      box-shadow: 0 0 16px #00f0ff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 35;
+    }
+    .scan-beam.scanning {
+      opacity: 1;
+      animation: scanSweep 1.8s ease-in-out infinite;
+    }
+    @keyframes scanSweep {
+      0% { top: 0%; }
+      50% { top: 100%; }
+      100% { top: 0%; }
+    }
+
+    /* Green Verified Overlay */
+    .verified-banner {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(16, 185, 129, 0.95);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+      z-index: 45;
+    }
+    .verified-banner.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Floating Micro-crop Preview Box */
+    .microcrop-floating {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      width: 220px;
+      background: #111827;
+      border: 1px solid #ff2d55;
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.35s ease;
+      z-index: 40;
+    }
+    .microcrop-floating.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .microcrop-header {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #ff2d55;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .microcrop-img {
+      width: 100%;
+      height: 70px;
+      background: #1e293b;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed rgba(255, 45, 85, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    .microcrop-cut {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 40px;
+      background: repeating-linear-gradient(45deg, #ff2d55, #ff2d55 5px, #991b1b 5px, #991b1b 10px);
+      opacity: 0.7;
+    }
+
+    /* Bottom Control & Timeline Bar */
+    .timeline-bar {
+      height: 48px;
+      background: rgba(13, 17, 26, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      z-index: 50;
+    }
+    .progress-track {
+      flex: 1;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00f0ff, #38bdf8);
+      transition: width 0.1s linear;
+    }
+    .timeline-phase {
+      font-size: 11px;
+      font-weight: 600;
+      color: #00f0ff;
+      width: 280px;
+      font-family: monospace;
+    }
+    .timeline-cta {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    .timeline-cta code {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V19a1 1 0 0 1-2 0v-2.07A6 6 0 0 1 5.07 13H3a1 1 0 0 1 0-2h2.07A6 6 0 0 1 11 5.07V3a1 1 0 0 1 2 0v2.07A6 6 0 0 1 18.93 11H21a1 1 0 0 1 0 2h-2.07A6 6 0 0 1 13 16.93zM12 7a5 5 0 1 0 5 5 5 5 0 0 0-5-5z"/></svg>
+      </div>
+      <span class="brand-title">ViewProbe</span>
+      <span class="brand-tag">Autonomous CSS Healing</span>
+    </div>
+    <div class="badge-group">
+      <div class="status-pill">
+        <span class="dot"></span>
+        <span>MCP Native</span>
+      </div>
+      <div class="status-pill">
+        <span>Playwright 1.49</span>
+      </div>
+      <div class="status-pill">
+        <span>Glama: Rated A 🏆</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Stage -->
+  <main class="stage">
+    <div class="glow-cyan"></div>
+    <div class="glow-ruby"></div>
+
+    <!-- Terminal -->
+    <div class="terminal-window">
+      <div class="terminal-header">
+        <div class="traffic-lights">
+          <span class="tl-red"></span>
+          <span class="tl-yellow"></span>
+          <span class="tl-green"></span>
+        </div>
+        <div class="terminal-title">antigravity — agent terminal</div>
+      </div>
+      <div class="terminal-body" id="termBody">
+        <!-- Lines injected via JS -->
+      </div>
+    </div>
+
+    <!-- Phone Preview -->
+    <div class="device-stage">
+      <div class="device-header">
+        <span>Viewport:</span>
+        <span class="pill">mobile (375 × 667)</span>
+      </div>
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="scan-beam" id="scanBeam"></div>
+
+        <div class="screen-content">
+          <div class="hero-text">
+            <h1 class="hero-h1">Scale Your AI Workflows</h1>
+            <p class="hero-sub">The modern standard for agentic software teams.</p>
+          </div>
+
+          <!-- SaaS Cards -->
+          <div class="cards-wrapper broken" id="cardsWrapper">
+            <div class="card">
+              <div class="card-title">Starter</div>
+              <div class="card-price">$29</div>
+              <div class="card-btn">Deploy</div>
+            </div>
+            <div class="card card-featured">
+              <div class="card-title">Enterprise Pro</div>
+              <div class="card-price">$199</div>
+              <div class="card-btn" style="background:#fff; color:#0f172a;">Upgrade Now</div>
+            </div>
+            <!-- Bounding Box Targeting Overlay -->
+            <div class="laser-target" id="laserTarget">
+              <span class="target-badge">OVERFLOW +145px</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verified Badge -->
+        <div class="verified-banner" id="verifiedBanner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>0 VIOLATIONS • LAYOUT VERIFIED</span>
+        </div>
+      </div>
+
+      <!-- Micro-crop Popout Box -->
+      <div class="microcrop-floating" id="microcropBox">
+        <div class="microcrop-header">
+          <span>Micro-Crop (~64 tokens)</span>
+          <span>145px cut</span>
+        </div>
+        <div class="microcrop-img">
+          <span style="font-size:10px; color:#cbd5e1; font-weight:600;">Enterprise Pro [$199]</span>
+          <div class="microcrop-cut"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Timeline Controls -->
+  <footer class="timeline-bar">
+    <div class="timeline-phase" id="phaseText">Phase 1: Agent builds component</div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="timeline-cta">
+      Try it: <code>npx viewprobe check &lt;url&gt;</code>
+    </div>
+  </footer>
+
+  <script>
+    const termBody = document.getElementById("termBody");
+    const scanBeam = document.getElementById("scanBeam");
+    const laserTarget = document.getElementById("laserTarget");
+    const cardsWrapper = document.getElementById("cardsWrapper");
+    const verifiedBanner = document.getElementById("verifiedBanner");
+    const microcropBox = document.getElementById("microcropBox");
+    const progressFill = document.getElementById("progressFill");
+    const phaseText = document.getElementById("phaseText");
+
+    function addLog(html) {
+      const line = document.createElement("div");
+      line.className = "log-line";
+      line.innerHTML = html;
+      termBody.appendChild(line);
+      setTimeout(() => line.classList.add("visible"), 20);
+      termBody.scrollTop = termBody.scrollHeight;
+    }
+
+    // Step-by-step animation sequence (Total: ~15 seconds)
+    const script = [
+      {
+        time: 500,
+        action: () => {
+          phaseText.textContent = "Phase 1: Agent builds initial UI";
+          addLog(`<span class="cmd-prompt">&gt;</span> <span class="cmd-text">Prompt:</span> "Add a 3-tier SaaS pricing card to the landing page"`);
+          addLog(`<span class="log-dim">[Agent] Generating Tailwind JSX... Done.</span>`);
+        }
+      },
+      {
+        time: 2500,
+        action: () => {
+          phaseText.textContent = "Phase 2: ViewProbe audits responsive CSS";
+          addLog(`<span class="cmd-prompt">$</span> <span class="cmd-text">npx viewprobe check http://localhost:3000 -v mobile</span>`);
+          addLog(`<span class="log-dim">[ViewProbe] Chromium engine initialized (38ms)</span>`);
+          scanBeam.classList.add("scanning");
+        }
+      },
+      {
+        time: 5000,
+        action: () => {
+          phaseText.textContent = "Phase 3: Geometric overflow pinpointed";
+          scanBeam.classList.remove("scanning");
+          laserTarget.classList.add("active");
+          microcropBox.classList.add("active");
+          addLog(`<span class="log-err">✖ 1 LAYOUT VIOLATION DETECTED</span>`);
+          addLog(`
+            <div class="log-json">
+              <div><b>Type:</b> "horizontal_overflow"</div>
+              <div><b>Selector:</b> "div.card.card-featured"</div>
+              <div><b>Overflow:</b> 145px (scrollWidth: 520px &gt; clientWidth: 375px)</div>
+              <div><b>Culprit Style:</b> min-width: 220px; flex-shrink: 0;</div>
+              <div><b>Micro-Crop:</b> 64 tokens attached</div>
+            </div>
+          `);
+        }
+      },
+      {
+        time: 9500,
+        action: () => {
+          phaseText.textContent = "Phase 4: Agent applies surgical CSS fix";
+          addLog(`<span class="log-dim">[Agent] Received micro-crop + computed styles.</span>`);
+          addLog(`<span class="log-succ">[Agent] Patching CSS: flex-col, w-full, flex-shrink: 1...</span>`);
+          laserTarget.classList.remove("active");
+          microcropBox.classList.remove("active");
+          cardsWrapper.className = "cards-wrapper fixed";
+        }
+      },
+      {
+        time: 11500,
+        action: () => {
+          phaseText.textContent = "Phase 5: Verified clean responsive bounds";
+          addLog(`<span class="cmd-prompt">$</span> <span class="cmd-text">npx viewprobe check http://localhost:3000 -v mobile</span>`);
+          addLog(`
+            <div class="log-json-succ">
+              <div><b>Result:</b> ✔ 0 violations detected (214ms)</div>
+              <div><b>mobile (375x667):</b> Passed</div>
+              <div><b>Status:</b> Ready for production deployment</div>
+            </div>
+          `);
+          verifiedBanner.classList.add("show");
+        }
+      },
+      {
+        time: 14500,
+        action: () => {
+          phaseText.textContent = "Complete: Layout healed autonomously in 14s";
+        }
+      }
+    ];
+
+    // Playback loop
+    function runDemo() {
+      termBody.innerHTML = "";
+      cardsWrapper.className = "cards-wrapper broken";
+      laserTarget.classList.remove("active");
+      microcropBox.classList.remove("active");
+      verifiedBanner.classList.remove("show");
+      scanBeam.classList.remove("scanning");
+      progressFill.style.width = "0%";
+
+      const startTime = Date.now();
+      const totalDuration = 15000;
+
+      const progressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const pct = Math.min((elapsed / totalDuration) * 100, 100);
+        progressFill.style.width = pct + "%";
+        if (elapsed >= totalDuration) {
+          clearInterval(progressInterval);
+        }
+      }, 50);
+
+      script.forEach(step => {
+        setTimeout(step.action, step.time);
+      });
+    }
+
+    runDemo();
+  </script>
+</body>
+</html>

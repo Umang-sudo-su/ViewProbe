@@ -1,6 +1,10 @@
+import fs from "fs";
+import path from "path";
+import { pathToFileURL } from "url";
 import { chromium, type Browser, type Page } from "playwright";
 import { type RawViolation } from "./scanner.js";
 import { cropViolation, highlightViolation } from "./cropper.js";
+import { generateSuggestedFix } from "./remediator.js";
 import {
   type ProbeConfig,
   type ProbeResult,
@@ -10,6 +14,26 @@ import {
   DEFAULT_CONFIG,
 } from "./types.js";
 import { getScannerSource } from "./injector.js";
+
+function resolveTargetUrl(config: ProbeConfig): string {
+  if (config.filePath) {
+    return pathToFileURL(path.resolve(config.filePath)).href;
+  }
+  const raw = config.url ?? "";
+  if (raw.startsWith("http://") || raw.startsWith("https://") || raw.startsWith("file://")) {
+    return raw;
+  }
+  if (
+    fs.existsSync(raw) ||
+    raw.startsWith("./") ||
+    raw.startsWith("../") ||
+    raw.startsWith("/") ||
+    raw.endsWith(".html")
+  ) {
+    return pathToFileURL(path.resolve(raw)).href;
+  }
+  return raw;
+}
 
 export class ProbeEngine {
   private browser: Browser | null = null;
@@ -77,8 +101,12 @@ export class ProbeEngine {
       summary = `Found ${errorCount} error${errorCount > 1 ? "s" : ""} and ${warnCount} warning${warnCount > 1 ? "s" : ""} across ${viewports.length} viewport${viewports.length > 1 ? "s" : ""}.`;
     }
 
+    const targetLabel = config.html
+      ? "raw:html"
+      : config.filePath ?? config.url ?? "unknown";
+
     return {
-      url: config.url,
+      url: targetLabel,
       timestamp: new Date().toISOString(),
       duration,
       viewportsChecked: viewports,
@@ -101,10 +129,28 @@ export class ProbeEngine {
       const scannerSrc = getScannerSource();
       await page.addInitScript({ content: scannerSrc });
 
-      await page.goto(config.url!, {
-        waitUntil: "networkidle",
-        timeout: config.timeout,
-      });
+      if (config.html) {
+        await page.setContent(config.html, {
+          waitUntil: "networkidle",
+          timeout: config.timeout,
+        });
+        await page.addScriptTag({ content: scannerSrc });
+      } else {
+        const targetUrl = resolveTargetUrl(config);
+        if (!targetUrl) {
+          throw new Error("Must provide a target url, filePath, or raw html string.");
+        }
+        await page.goto(targetUrl, {
+          waitUntil: "networkidle",
+          timeout: config.timeout,
+        });
+      }
+
+      // Ensure the scanner function is available in the page execution context
+      const isScannerLoaded = await page.evaluate(() => typeof (window as any).__viewprobe_scan === "function");
+      if (!isScannerLoaded) {
+        await page.addScriptTag({ content: scannerSrc });
+      }
 
       if (config.waitForSelector) {
         await page.waitForSelector(config.waitForSelector, {
@@ -133,6 +179,13 @@ export class ProbeEngine {
           selector: raw.selector,
           bounds: raw.bounds,
           culpritStyles: raw.styles,
+          suggestedFix: generateSuggestedFix({
+            type: raw.type as LayoutViolation["type"],
+            selector: raw.selector,
+            bounds: raw.bounds,
+            culpritStyles: raw.styles,
+            message: raw.message,
+          }),
         };
 
         if (config.microCrops) {
