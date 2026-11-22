@@ -139,16 +139,6 @@ npm run build
 npm test
 ```
 
-## Roadmap
-
-- [ ] Element collision detection (overlapping interactive elements)
-- [ ] Z-index stacking analysis
-- [ ] Aspect ratio distortion checks for images/videos
-- [ ] CSS source mapping (trace computed styles back to source files)
-- [ ] Watch mode with file-change triggers
-- [ ] GitHub Actions integration
-- [ ] Figma-to-layout comparison
-
 ## License
 
 MIT
