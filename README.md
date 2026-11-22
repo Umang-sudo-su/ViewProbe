@@ -23,6 +23,25 @@ When an agent introduces a CSS defect (such as a rigid `min-width` that overflow
 | <img src="assets/before-fix.png" width="340" alt="Mobile layout before fix: card overflows viewport by 23px" /> | <img src="assets/after-fix.png" width="340" alt="Mobile layout after fix: responsive fluid bounds" /> |
 | ❌ *Card overflows 375px screen by 23px, text clipped, 22px button* | ✅ *Fluid responsive bounds, clean ellipsis, 44px accessible touch target* |
 
+## How ViewProbe Compares
+
+Most developers currently try to verify agent UI changes using raw browser screenshots, DOM dumps, or visual regression dashboards. Here is why those approaches fail autonomous coding agents:
+
+| Feature / Approach | Full Screenshots (`page.screenshot`) | Raw DOM / HTML Dumps | Visual Regression (Percy / Chromatic) | **ViewProbe** |
+| :--- | :---: | :---: | :---: | :---: |
+| **Token Cost per Turn** | ~1,500 – 3,000 vision tokens | 20,000+ text tokens | N/A (Web UI only) | **~80 tokens** (micro-crop + JSON) |
+| **Identifies CSS Culprit** | ❌ No (Agent must guess) | ❌ No (Markup only) | ❌ No (Pixel diff only) | ✅ **Yes** (Exact computed style & selector) |
+| **Deterministic Math** | ❌ No (Probabilistic vision) | ❌ No (No geometry data) | ⚠️ Partial (Pixel threshold) | ✅ **Yes** (DOM geometry & viewport math) |
+| **Autonomous Agent Loop** | ⚠️ High latency & cost | ❌ Context window blowup | ❌ Human review required | ✅ **Native MCP & CLI tool-calling** |
+| **Execution Environment** | ✅ Local | ✅ Local | ❌ Paid Cloud / SaaS | ✅ **100% Local & Free** |
+
+### Why Existing Approaches Fall Short:
+
+* **vs. Raw Full Screenshots (`page.screenshot()`)**: Full-screen vision prompts burn 1,500+ tokens per viewport turn. Furthermore, vision models are probabilistic—they frequently hallucinate alignment, miss 15px mobile overflows, and cannot tell the agent *which* CSS rule (`min-width: 420px;`) caused the problem.
+* **vs. Raw DOM / Accessibility Tree Dumps**: Dumping 50,000 characters of HTML into an LLM context wastes tokens on unchanged markup and completely ignores the rendered layout, CSS cascade, media queries, and flexbox wrapping.
+* **vs. Traditional Visual Regression (Percy, Chromatic)**: Designed for human reviewers to click "Approve / Reject" on pixel diffs in a web dashboard. They don't output machine-readable remediation diagnostics for LLM tool-calling.
+* **vs. Accessibility Linters (axe-core, Lighthouse)**: A11y linters check semantic HTML, ARIA roles, and contrast, but are completely blind to responsive layout breakage, clipped text, and broken flex containers.
+
 ## Quick Start
 
 ```bash
